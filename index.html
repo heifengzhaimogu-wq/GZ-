@@ -51,6 +51,10 @@ $("logout").onclick=()=>{["gz_price_token","gz_price_name","gz_price_role"].forE
 const pct=(n,d)=>d?Math.round(n/d*100)+"%":"0%";
 function stats(list){const x={total:list.length,accurate:0,needs:0,ownerPending:0,blank:0,unchecked:0,checked:0};for(const r of list){const s=r.check?.asking_status;if(s==="accurate")x.accurate++;else if(s==="needs_change")x.needs++;else if(s==="owner_pending")x.ownerPending++;else x.unchecked++;if(r.system_asking_price===null)x.blank++}x.checked=x.total-x.unchecked;return x}
 function grouped(list,key,label){const map=new Map();for(const r of list){const k=key(r),bucket=map.get(k)||{name:label(r),rows:[]};bucket.rows.push(r);map.set(k,bucket)}return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,"zh-CN")).map(g=>({name:g.name,...stats(g.rows)}))}
+function compareProgress(a,b){return b.accurate/b.total-a.accurate/a.total||b.checked/b.total-a.checked/a.total||b.accurate-a.accurate||b.checked-a.checked||a.name.localeCompare(b.name,"zh-CN")}
+function teamOrder(name){return (String(name||"").match(/[A-Z]组/i)||[])[0]?.toUpperCase()||String(name||"")}
+function compareTeams(a,b){const base=x=>x.name.replace(/[A-Z]组.*$/i,"");return base(a).localeCompare(base(b),"zh-CN")||teamOrder(a.name).localeCompare(teamOrder(b.name),"en")||a.name.localeCompare(b.name,"zh-CN")}
+function personGroups(list){const map=new Map();for(const r of list){const key=(r.owner_employee_code||r.owner_name||"未填维护人")+"|"+(r.team_name||"");const g=map.get(key)||{name:r.owner_name||"未填维护人",team_name:r.team_name||"未分组",rows:[]};g.rows.push(r);map.set(key,g)}return [...map.values()].map(g=>({name:g.name,team_name:g.team_name,...stats(g.rows)})).sort((a,b)=>teamOrder(a.team_name).localeCompare(teamOrder(b.team_name),"en")||compareProgress(a,b))}
 function noticeData(){
   const key=$("noticeScope").value,parts=key.split("::"),type=parts[0],name=parts.slice(1).join("::");
   const selected=type==="store"?rows.filter(x=>x.store_name===name):type==="team"?rows.filter(x=>x.team_name===name):rows;
@@ -58,10 +62,11 @@ function noticeData(){
   const add=(title,getKey,getLabel)=>sections.push({title,rows:grouped(selected,getKey,getLabel)});
   const store=()=>add("门店汇总",r=>r.store_name||"未分店",r=>r.store_name||"未分店");
   const team=()=>add("小组汇总",r=>r.team_name||"未分组",r=>r.team_name||"未分组");
-  const person=()=>add("个人汇总",r=>(r.owner_employee_code||r.owner_name||"未填维护人")+"|"+(r.team_name||""),r=>(r.owner_name||"未填维护人")+(r.team_name?" · "+r.team_name.replace(r.store_name||"",""):""));
+  const person=()=>sections.push({title:"个人汇总",rows:personGroups(selected)});
   if(type==="all"&&(role==="owner"||role==="bp")){store();team()}
   else if(type==="store"||type==="all"&&role==="store_lead"){team();person()}
   else if(type==="team"||type==="all"&&role==="manager")person();
+  for(const section of sections)if(section.title==="小组汇总")section.rows.sort((a,b)=>a.accurate||a.checked||b.accurate||b.checked?compareProgress(a,b):compareTeams(a,b));else if(section.title==="门店汇总")section.rows.sort(compareProgress);
   return{label,totals:stats(selected),sections,date:new Date().toLocaleString("zh-CN",{hour12:false})};
 }
 function noticeMode(){
@@ -73,15 +78,15 @@ function noticeMode(){
 }
 function rankGroups(groups){
   const active=groups.filter(g=>g.total&&g.checked>0);
-  const byRate=(a,b)=>b.checked/b.total-a.checked/a.total||b.checked-a.checked||b.accurate-a.accurate||a.name.localeCompare(b.name,"zh-CN");
+  const byRate=compareProgress;
   return{
     finished:active.filter(g=>g.checked===g.total).sort(byRate),
     leaders:[...active].sort(byRate).slice(0,3),
-    trailing:active.filter(g=>g.checked<g.total).sort((a,b)=>a.checked/a.total-b.checked/b.total||a.checked-b.checked||a.name.localeCompare(b.name,"zh-CN")).slice(0,3),
+    trailing:active.filter(g=>g.checked<g.total).sort((a,b)=>-compareProgress(a,b)).slice(0,3),
     notStarted:groups.filter(g=>g.total&&g.checked===0)
   };
 }
-const brief=g=>g.name+" "+g.checked+"/"+g.total+"（"+pct(g.checked,g.total)+"）";
+const brief=g=>g.name+" 已核查 "+g.checked+"/"+g.total+"（"+pct(g.checked,g.total)+"），准确 "+g.accurate+"（"+pct(g.accurate,g.total)+"）";
 const names=gs=>gs.length?gs.map(brief).join("、"):"暂无";
 function notice(){
   const d=noticeData(),m=d.totals,mode=noticeMode(),primary=d.sections[0],secondary=d.sections[1];
@@ -94,7 +99,7 @@ function notice(){
   ];
   if(primary){
     lines.push(mode==="company"?"【各店进度】":mode==="store"?"【各小组进度】":"【伙伴进度】");
-    first.forEach(g=>lines.push("• "+g.name+"：已核查 "+g.checked+"/"+g.total+" 套（"+pct(g.checked,g.total)+"），最新准确 "+g.accurate+" 套"));
+    first.forEach(g=>lines.push("• "+g.name+"：已核查 "+g.checked+"/"+g.total+" 套（"+pct(g.checked,g.total)+"），最新准确 "+g.accurate+" 套（"+pct(g.accurate,g.total)+"）"));
     lines.push("");
     lines.push("率先全部核查："+names(p.finished));
     lines.push("推进靠前："+names(p.leaders));
@@ -119,11 +124,16 @@ function renderNotice(){
   sel.replaceChildren(...options.map(([v,label])=>new Option(label,v)));if(options.some(x=>x[0]===old))sel.value=old;
   $("noticePreview").textContent=notice();$("posterPreview").classList.add("hidden");$("posterPreview").removeAttribute("src");
 }
+function sectionBlocks(section){
+  if(section.title!=="个人汇总")return[{title:"",rows:section.rows}];
+  const map=new Map();for(const p of section.rows){const key=p.team_name||"未分组",bucket=map.get(key)||[];bucket.push(p);map.set(key,bucket)}
+  return[...map].sort((a,b)=>teamOrder(a[0]).localeCompare(teamOrder(b[0]),"en")).map(([title,rows])=>({title:teamOrder(title),rows}));
+}
 function poster(){
   const d=noticeData(),m=d.totals,sections=d.sections;
   const canvas=document.createElement("canvas"),c=canvas.getContext("2d"),W=1080,P=54;
-  const groupHeight=sections.reduce((n,s)=>n+98+Math.ceil(s.rows.length/2)*85,0);
-  canvas.width=W;canvas.height=740+groupHeight+sections.length*200;
+  const contentHeight=sections.reduce((n,s)=>n+115+sectionBlocks(s).reduce((h,b)=>h+(b.title?40:0)+Math.ceil(b.rows.length/2)*85,0),0);
+  canvas.width=W;canvas.height=740+contentHeight+sections.length*200;
   const H=canvas.height;
   const bg=c.createLinearGradient(0,0,W,H);bg.addColorStop(0,"#432077");bg.addColorStop(.45,"#6f3ab1");bg.addColorStop(1,"#24134c");c.fillStyle=bg;c.fillRect(0,0,W,H);
   c.fillStyle="#ffffff0d";for(let i=0;i<12;i++){c.beginPath();c.arc(70+(i*227)%1050,170+(i*391)%H,30+i%4*27,0,Math.PI*2);c.fill()}
@@ -142,9 +152,12 @@ function poster(){
   for(const section of sections){
     txt(section.title,P,y,31,"#fff","bold");y+=35;
     txt("已核查 / 名下房源 · 核查完成率",P,y,19,"#e5d9f7");y+=25;
-    const list=section.rows;
-    list.forEach((g,i)=>{const col=i%2,row=Math.floor(i/2),x=P+col*494,cy=y+row*85;box(x,cy,478,70,"#ffffffeb",14);txt(g.name,x+18,cy+28,21,"#34224c","bold",285);txt(g.checked+"/"+g.total+" · "+pct(g.checked,g.total),x+18,cy+56,18,"#755a92");txt(g.accurate+" 准确",x+360,cy+44,17,"#6942a0","bold",98)});
-    y+=Math.ceil(list.length/2)*85+55;
+    for(const block of sectionBlocks(section)){
+      if(block.title){txt(block.title,P+4,y+27,24,"#efe2ff","bold");y+=40}
+      block.rows.forEach((g,i)=>{const col=i%2,row=Math.floor(i/2),x=P+col*494,cy=y+row*85;box(x,cy,478,70,"#ffffffeb",14);txt(g.name,x+18,cy+28,21,"#34224c","bold",285);txt(g.checked+"/"+g.total+" · "+pct(g.checked,g.total),x+18,cy+56,18,"#755a92");txt("准确 "+pct(g.accurate,g.total),x+350,cy+44,17,"#6942a0","bold",108)});
+      y+=Math.ceil(block.rows.length/2)*85;
+    }
+    y+=55;
   }
   for(const section of sections){
     const ranking=rankGroups(section.rows);
