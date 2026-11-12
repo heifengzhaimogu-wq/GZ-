@@ -5,6 +5,8 @@
 <title>广州房源报价准确管理</title>
 <style>
 :root{font-family:system-ui,-apple-system,"PingFang SC",sans-serif;color:#182339;background:#f4f6fa}*{box-sizing:border-box}body{margin:0}header{background:#102b49;color:white;padding:22px max(20px,calc((100vw - 1200px)/2))}h1{margin:0;font-size:25px}header p{margin:6px 0 0;color:#bfd2e8}main{max-width:1200px;margin:auto;padding:22px}.card{background:white;border:1px solid #e3e8f0;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 4px 22px #102b4909}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.metric{background:#edf4ff;border-radius:12px;padding:16px}.metric strong{display:block;font-size:27px;color:#114b86}.metric span{font-size:13px;color:#53647a}label{display:block;font-size:13px;color:#53647a;margin-bottom:5px}input,select,button{font:inherit}input,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}button{border:0;border-radius:9px;background:#1263aa;color:white;padding:11px 16px;cursor:pointer}button.secondary{background:#e9eef5;color:#1d3552}button:disabled{opacity:.5;cursor:not-allowed}.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.row>*{flex:1}.muted{color:#68768a;font-size:13px}.error{color:#b42318}.success{color:#067647}.hidden{display:none!important}.properties{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.property{border:1px solid #e4e9f0;border-radius:12px;padding:16px}.property h3{margin:0 0 5px;font-size:17px}.tag{display:inline-block;padding:4px 8px;border-radius:99px;background:#eef2f6;color:#45566a;font-size:12px}.price{font-size:22px;font-weight:700;margin:10px 0}.blank{color:#b42318}.property .row{margin-top:12px}.group{display:flex;align-items:center;gap:10px;border-top:1px solid #edf0f4;padding:10px 0}.bar{height:8px;background:#e5ebf2;border-radius:8px;overflow:hidden;flex:1}.bar i{display:block;height:100%;background:#2474b9}.group b{min-width:90px}.group small{min-width:90px;text-align:right}.notice-preview{border:1px solid #d7e4f2;border-radius:14px;background:#f8fbff;padding:18px;margin:16px 0;overflow:auto}.notice-preview h3{margin:0 0 5px}.notice-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.notice-stats div{background:#fff;border-radius:10px;padding:12px}.notice-stats strong{display:block;font-size:22px;color:#114b86}.notice-stats span{font-size:12px;color:#53647a}.notice-table{width:100%;border-collapse:collapse;min-width:520px}.notice-table th,.notice-table td{padding:9px;border-bottom:1px solid #dfe7f1;text-align:left;font-size:13px}.notice-table th{color:#53647a}.notice-actions{display:flex;gap:10px;flex-wrap:wrap}.notice-actions button{flex:1;min-width:140px}@media(max-width:720px){header{padding:20px}main{padding:12px}.grid,.metrics,.properties{grid-template-columns:1fr 1fr}.row{display:block}.row>*{margin:8px 0}.property{grid-column:span 2}.notice-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:420px){.metrics{grid-template-columns:1fr 1fr}}
+.notice-preview{border:1px solid #ddd3f7;background:linear-gradient(145deg,#fcfaff,#f3efff);padding:22px;white-space:pre-wrap;line-height:1.8;color:#302449;font-size:14px;overflow-wrap:anywhere}
+.poster-preview{display:block;width:min(100%,540px);height:auto;margin:16px auto;border-radius:16px;box-shadow:0 15px 35px #3923562e}
 </style>
 </head>
 <body>
@@ -21,7 +23,7 @@
 <div class="card row"><div><h2 id="welcome" style="margin:0"></h2><span id="scope" class="muted"></span></div><button id="logout" class="secondary" style="flex:0">退出</button></div>
 <div id="metrics" class="metrics"></div>
 <section class="card"><h2>门店进度</h2><div id="groups"></div><h2>小组进度</h2><div id="teams"></div></section>
-<section class="card"><h2>微信群公示信息包</h2><p class="muted">全司版展示门店和小组；店面版展示小组和个人。仅公示数量、核查进展及比例，不展示逐套报价。</p><label for="noticeScope">公示范围</label><select id="noticeScope"></select><div id="noticePreview" class="notice-preview"></div><div class="notice-actions"><button id="copyNotice">复制群公告文案</button><button id="copyImage" class="secondary">复制图片</button><button id="saveImage" class="secondary">下载海报 PNG</button></div><p id="noticeMessage" class="muted"></p></section>
+<section class="card"><h2>微信群公示信息包</h2><p class="muted">全司版写明各店进展及小组排名；店面版写明各组进展及伙伴表现。下方就是可直接发送的文案，海报按同一口径生成，不展示逐套报价。</p><label for="noticeScope">公示范围</label><select id="noticeScope"></select><div id="noticePreview" class="notice-preview"></div><div class="notice-actions"><button id="copyNotice">复制这段群公告</button><button id="showPoster" class="secondary">预览海报</button><button id="copyImage" class="secondary">复制海报图片</button><button id="saveImage" class="secondary">下载海报 PNG</button></div><img id="posterPreview" class="poster-preview hidden" alt="报价核查公示海报预览"><p id="noticeMessage" class="muted"></p></section>
 <section id="admin" class="card hidden"><h2>管理员导入</h2><p class="muted">Excel 或 CSV 在本机解析，只提交工作台所需字段；原始文件不会保存在服务器。支持列名：房源编号、店面、店组、房源维护人、项目、租售类型、报价。</p><input id="upload" type="file" accept=".xlsx,.xls,.csv,text/csv"><p id="importMessage" class="muted"></p></section>
 <section class="card"><h2>逐套核查</h2><div class="grid"><div><label>门店</label><select id="filterStore"><option value="">全部可见门店</option></select></div><div><label>小组</label><select id="filterTeam"><option value="">全部可见小组</option></select></div><div><label>搜索房源／维护人</label><input id="search" placeholder="输入房源编号、项目或姓名"></div></div><p id="listCount" class="muted"></p><div id="properties" class="properties"></div></section>
 </section>
@@ -62,36 +64,103 @@ function noticeData(){
   else if(type==="team"||type==="all"&&role==="manager")person();
   return{label,totals:stats(selected),sections,date:new Date().toLocaleString("zh-CN",{hour12:false})};
 }
+function noticeMode(){
+  const type=$("noticeScope").value.split("::")[0];
+  if(type==="store"||type==="all"&&role==="store_lead")return "store";
+  if(type==="team"||type==="all"&&role==="manager")return "team";
+  if(type==="all"&&role==="advisor")return "person";
+  return "company";
+}
+function rankGroups(groups){
+  const active=groups.filter(g=>g.total&&g.checked>0);
+  const byRate=(a,b)=>b.checked/b.total-a.checked/a.total||b.checked-a.checked||b.accurate-a.accurate||a.name.localeCompare(b.name,"zh-CN");
+  return{
+    finished:active.filter(g=>g.checked===g.total).sort(byRate),
+    leaders:[...active].sort(byRate).slice(0,3),
+    trailing:active.filter(g=>g.checked<g.total).sort((a,b)=>a.checked/a.total-b.checked/b.total||a.checked-b.checked||a.name.localeCompare(b.name,"zh-CN")).slice(0,3),
+    notStarted:groups.filter(g=>g.total&&g.checked===0)
+  };
+}
+const brief=g=>g.name+" "+g.checked+"/"+g.total+"（"+pct(g.checked,g.total)+"）";
+const names=gs=>gs.length?gs.map(brief).join("、"):"暂无";
+function notice(){
+  const d=noticeData(),m=d.totals,mode=noticeMode(),primary=d.sections[0],secondary=d.sections[1];
+  const scope=mode==="company"?(role==="owner"?"全司":"负责门店"):mode==="store"?d.label:mode==="team"?d.label:"个人";
+  const first=primary?.rows||[],next=secondary?.rows||[],p=rankGroups(first),q=rankGroups(next);
+  const lines=[
+    "【广州房源报价核查｜"+scope+"进展公示】",
+    "截至 "+d.date+"，"+scope+"共需核查 "+m.total+" 套房源，已核查 "+m.checked+" 套，完成率 "+pct(m.checked,m.total)+"；其中确认报价最新准确 "+m.accurate+" 套、需修改 "+m.needs+" 套、待业主确认 "+m.ownerPending+" 套。尚未核查 "+m.unchecked+" 套，系统报价未填 "+m.blank+" 套。",
+    ""
+  ];
+  if(primary){
+    lines.push(mode==="company"?"【各店进度】":mode==="store"?"【各小组进度】":"【伙伴进度】");
+    first.forEach(g=>lines.push("• "+g.name+"：已核查 "+g.checked+"/"+g.total+" 套（"+pct(g.checked,g.total)+"），最新准确 "+g.accurate+" 套"));
+    lines.push("");
+    lines.push("率先全部核查："+names(p.finished));
+    lines.push("推进靠前："+names(p.leaders));
+    lines.push("推进较慢："+names(p.trailing));
+    lines.push("尚未开始："+(p.notStarted.length?p.notStarted.map(g=>g.name).join("、"):"无"));
+  }
+  if(secondary){
+    lines.push("","【"+(mode==="company"?"小组":"伙伴")+"重点进展】");
+    lines.push("率先全部核查："+names(q.finished));
+    lines.push("推进前三："+names(q.leaders));
+    lines.push("推进后三："+names(q.trailing));
+    lines.push("尚未开始："+(q.notStarted.length?q.notStarted.map(g=>g.name).join("、"):"无"));
+  }
+  lines.push("","报价准确，才能让客户沟通与房源推荐更有依据。请优先核对尚未开始、需修改及系统报价未填的房源；已确认最新准确的房源无需重复催办。","十一月，一起把报价核准、把进度冲起来！");
+  return lines.join("\n");
+}
 function renderNotice(){
   const sel=$("noticeScope"),old=sel.value,stores=[...new Set(rows.map(x=>x.store_name))].sort(),teams=[...new Set(rows.map(x=>x.team_name).filter(Boolean))].sort(),options=[];
   if(role==="owner")options.push(["all","全公司"]);else if(role==="bp"&&stores.length>1)options.push(["all","负责门店合计"]);else if(role==="advisor")options.push(["all","我名下房源"]);else if(role==="manager")options.push(["all","我的小组"]);else if(role==="store_lead")options.push(["all","我的门店"]);
   for(const s of stores)if(role==="owner"||role==="bp"||role==="store_lead")options.push(["store::"+s,s]);
   for(const t of teams)if(role==="owner"||role==="bp"||role==="store_lead"||role==="manager")options.push(["team::"+t,t]);
   sel.replaceChildren(...options.map(([v,label])=>new Option(label,v)));if(options.some(x=>x[0]===old))sel.value=old;
-  const d=noticeData(),m=d.totals,cells=[["房源总量",m.total],["已完成核查",m.checked+" · "+pct(m.checked,m.total)],["最新准确",m.accurate+" · "+pct(m.accurate,m.total)],["需修改",m.needs],["待业主确认",m.ownerPending],["系统未填报价",m.blank]];
-  const tables=d.sections.map(section=>"<h4>"+esc(section.title)+"</h4><table class='notice-table'><thead><tr><th>范围</th><th>房源</th><th>已核查</th><th>核查率</th><th>准确</th><th>需修改</th><th>未填报价</th></tr></thead><tbody>"+section.rows.map(g=>"<tr><td>"+esc(g.name)+"</td><td>"+g.total+"</td><td>"+g.checked+"</td><td>"+pct(g.checked,g.total)+"</td><td>"+g.accurate+"</td><td>"+g.needs+"</td><td>"+g.blank+"</td></tr>").join("")+"</tbody></table>").join("");
-  $("noticePreview").innerHTML="<h3>广州房源报价核查公示 · "+esc(d.label)+"</h3><p class='muted'>更新于 "+esc(d.date)+" · 未核查 "+m.unchecked+" 套</p><div class='notice-stats'>"+cells.map(([label,value])=>"<div><strong>"+esc(value)+"</strong><span>"+esc(label)+"</span></div>").join("")+"</div>"+tables+"<p class='muted'>已确认准确的房源无需重复催办；请优先处理需修改和系统未填报价的房源。</p>";
+  $("noticePreview").textContent=notice();$("posterPreview").classList.add("hidden");$("posterPreview").removeAttribute("src");
 }
-function notice(){const d=noticeData(),m=d.totals;const sections=d.sections.map(section=>"\n【"+section.title+"】\n"+section.rows.map(g=>g.name+"："+(section.title==="个人汇总"?"名下 ":"房源 ")+g.total+" 套，已核查 "+g.checked+"（"+pct(g.checked,g.total)+"），准确 "+g.accurate+"，需改 "+g.needs+"，未填报价 "+g.blank).join("\n")).join("");return "【广州房源报价核查公示｜"+d.label+"】\n截至 "+d.date+"，共 "+m.total+" 套房源；已核查 "+m.checked+" 套（"+pct(m.checked,m.total)+"），其中最新准确 "+m.accurate+" 套（占全部 "+pct(m.accurate,m.total)+"），需修改 "+m.needs+" 套，待业主确认 "+m.ownerPending+" 套；尚未核查 "+m.unchecked+" 套，系统未填报价 "+m.blank+" 套。"+sections+"\n请责任人优先核对未核查、需修改及系统未填报价的房源；已确认最新准确的房源无需重复推动。"}
 function poster(){
-  const d=noticeData(),m=d.totals,canvas=document.createElement("canvas"),c=canvas.getContext("2d");
-  canvas.width=1080;canvas.height=680+d.sections.reduce((n,s)=>n+120+s.rows.length*62,0);
-  c.fillStyle="#f5f8fc";c.fillRect(0,0,1080,canvas.height);c.fillStyle="#102b49";c.fillRect(0,0,1080,165);
-  c.fillStyle="white";c.font="bold 44px sans-serif";c.fillText("广州房源报价核查公示",54,77);
-  c.font="25px sans-serif";c.fillText(d.label+"  ·  "+d.date,56,125,960);
-  const items=[["房源总量",m.total],["已核查",m.checked+" / "+m.total],["核查完成率",pct(m.checked,m.total)],["最新准确",m.accurate+" · "+pct(m.accurate,m.total)],["需修改",m.needs],["系统未填报价",m.blank]];
-  items.forEach(([label,value],i)=>{const x=54+(i%3)*330,y=195+Math.floor(i/3)*135;c.fillStyle="white";c.fillRect(x,y,310,115);c.fillStyle="#53647a";c.font="22px sans-serif";c.fillText(label,x+20,y+34);c.fillStyle="#114b86";c.font="bold 39px sans-serif";c.fillText(String(value),x+20,y+86,275)});
-  let y=495;
-  for(const section of d.sections){
-    c.fillStyle="#102b49";c.font="bold 27px sans-serif";c.fillText(section.title,54,y);y+=42;
-    c.fillStyle="#dbe7f4";c.fillRect(54,y,972,48);c.fillStyle="#314761";c.font="20px sans-serif";
-    [["范围",70],["房源",375],["已核查",480],["核查率",605],["准确",740],["需改",855],["未填",965]].forEach(([t,x])=>c.fillText(t,x,y+32));y+=48;
-    section.rows.forEach((g,i)=>{c.fillStyle=i%2?"#fff":"#edf3fa";c.fillRect(54,y+i*62,972,62);c.fillStyle="#20344f";c.font="21px sans-serif";[[g.name,70],[g.total,375],[g.checked,480],[pct(g.checked,g.total),605],[g.accurate,740],[g.needs,855],[g.blank,965]].forEach(([t,x],j)=>c.fillText(String(t),x,y+i*62+40,j?95:285))});
-    y+=section.rows.length*62+30;
+  const d=noticeData(),m=d.totals,sections=d.sections;
+  const canvas=document.createElement("canvas"),c=canvas.getContext("2d"),W=1080,P=54;
+  const groupHeight=sections.reduce((n,s)=>n+98+Math.ceil(s.rows.length/2)*85,0);
+  canvas.width=W;canvas.height=740+groupHeight+sections.length*200;
+  const H=canvas.height;
+  const bg=c.createLinearGradient(0,0,W,H);bg.addColorStop(0,"#432077");bg.addColorStop(.45,"#6f3ab1");bg.addColorStop(1,"#24134c");c.fillStyle=bg;c.fillRect(0,0,W,H);
+  c.fillStyle="#ffffff0d";for(let i=0;i<12;i++){c.beginPath();c.arc(70+(i*227)%1050,170+(i*391)%H,30+i%4*27,0,Math.PI*2);c.fill()}
+  const box=(x,y,w,h,color,r=22)=>{c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,r);c.fill()};
+  const txt=(s,x,y,size=24,color="#fff",weight="normal",max)=>{c.fillStyle=color;c.font=weight+" "+size+"px system-ui, PingFang SC, sans-serif";c.fillText(String(s),x,y,max)};
+  box(P,45,972,76,"#ffffff24",38);txt("广州房源报价准确管理",P+28,96,29,"#fff","bold");
+  txt("11月 · 报价核查进展",P,192,47,"#fff","bold");
+  txt(d.label+"   |   截至 "+d.date,P,243,23,"#e9dcff");
+  box(P,283,972,284,"#fff");
+  txt("整体进度",P+30,333,25,"#6a3e9e","bold");
+  txt(m.checked+" / "+m.total,P+30,425,70,"#44216f","bold");
+  txt("已核查 · "+pct(m.checked,m.total),P+34,467,28,"#7b5aa4");
+  const metrics=[["最新准确",m.accurate],["需修改",m.needs],["未填报价",m.blank]];
+  metrics.forEach(([label,value],i)=>{const x=P+440+i*165;box(x,365,150,143,i===0?"#ede7f8":i===1?"#fff0e7":"#f4f1fa",16);txt(value,x+17,424,41,i===0?"#5c2d9a":i===1?"#bd5b33":"#6a4d89","bold",116);txt(label,x+17,473,19,"#665a73")});
+  let y=620;
+  for(const section of sections){
+    txt(section.title,P,y,31,"#fff","bold");y+=35;
+    txt("已核查 / 名下房源 · 核查完成率",P,y,19,"#e5d9f7");y+=25;
+    const list=section.rows;
+    list.forEach((g,i)=>{const col=i%2,row=Math.floor(i/2),x=P+col*494,cy=y+row*85;box(x,cy,478,70,"#ffffffeb",14);txt(g.name,x+18,cy+28,21,"#34224c","bold",285);txt(g.checked+"/"+g.total+" · "+pct(g.checked,g.total),x+18,cy+56,18,"#755a92");txt(g.accurate+" 准确",x+360,cy+44,17,"#6942a0","bold",98)});
+    y+=Math.ceil(list.length/2)*85+55;
   }
-  c.fillStyle="#52657d";c.font="21px sans-serif";c.fillText("已确认准确无需重复催办  ·  优先处理需修改与未填报价",54,canvas.height-65,960);return canvas;
+  for(const section of sections){
+    const ranking=rankGroups(section.rows);
+    box(P,y,972,180,"#ffffff20");
+    txt(section.title.replace("汇总","")+"进展焦点",P+24,y+39,27,"#fff","bold");
+    txt("率先完成："+(ranking.finished.length?ranking.finished.slice(0,3).map(g=>g.name).join("、"):"暂无"),P+24,y+72,20,"#f4ecff","normal",910);
+    txt("推进靠前："+(ranking.leaders.length?ranking.leaders.map(g=>g.name).join("、"):"暂无"),P+24,y+103,20,"#f4ecff","normal",910);
+    txt("推进较慢："+(ranking.trailing.length?ranking.trailing.map(g=>g.name).join("、"):"暂无"),P+24,y+134,20,"#f4ecff","normal",910);
+    txt("尚未开始："+(ranking.notStarted.length?ranking.notStarted.slice(0,5).map(g=>g.name).join("、")+(ranking.notStarted.length>5?"等":""):"无"),P+24,y+165,20,"#f4ecff","normal",910);
+    y+=200;
+  }
+  txt("报价准确 · 沟通更有依据   |   十一月，我们一起冲冲冲！",P,H-65,25,"#f2eaff","bold",970);
+  return canvas;
 }
 $("noticeScope").onchange=renderNotice;
+$("showPoster").onclick=()=>{const img=$("posterPreview");img.src=poster().toDataURL("image/png");img.classList.remove("hidden");img.scrollIntoView({behavior:"smooth",block:"start"})};
 $("copyNotice").onclick=async()=>{try{await navigator.clipboard.writeText(notice());message("noticeMessage","公示文案已复制，可直接粘贴到微信群。") }catch(e){message("noticeMessage","复制失败，请检查浏览器剪贴板权限。",true)}};
 $("copyImage").onclick=async()=>{try{const blob=await new Promise(ok=>poster().toBlob(ok,"image/png"));if(!blob||!navigator.clipboard.write||!window.ClipboardItem)throw Error("clipboard_unavailable");await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);message("noticeMessage","海报图片已复制，可直接粘贴到微信群。") }catch(e){message("noticeMessage","浏览器未允许复制图片，请使用“下载海报 PNG”。",true)}};
 $("saveImage").onclick=async()=>{const blob=await new Promise(ok=>poster().toBlob(ok,"image/png"));if(!blob)return message("noticeMessage","图片生成失败",true);const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="广州房源报价公示-"+noticeData().label+".png";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message("noticeMessage","海报已下载，可直接发到微信群。")};
