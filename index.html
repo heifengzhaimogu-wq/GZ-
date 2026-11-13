@@ -21,14 +21,13 @@ input,select{border-color:#d9c9ef;border-radius:12px;background:#fff}input:focus
 #login{background:linear-gradient(125deg,#fff 65%,#f7efff)}#login details{border-top:1px dashed #dec9f4;margin-top:20px;padding-top:14px}#login summary{color:#6b419a;cursor:pointer}.public-head h2{margin:0}.public-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.public-item{box-shadow:0 3px 12px #693b9d0a}
 @media(max-width:720px){header{padding:28px 20px 30px}main{padding:14px}.card{padding:18px;border-radius:18px}.group{align-items:flex-start;flex-wrap:wrap}.group .bar{flex-basis:100%;order:3}.group small{text-align:left;margin-left:auto}.public-list{grid-template-columns:1fr}.notice-actions button{min-width:calc(50% - 6px)}}
 @media(max-width:420px){header h1{font-size:25px}header p{font-size:13px}.metric strong{font-size:23px}.public-item{padding:13px}}
-.mascot-banner{display:grid;grid-template-columns:minmax(0,1fr) 185px;align-items:center;gap:14px;background:linear-gradient(115deg,#482078,#7642af 72%,#9a5bc7);color:white;padding:18px 26px;overflow:hidden;min-height:188px}.mascot-banner h2{color:white;margin:0 0 8px;font-size:clamp(21px,3vw,29px)}.mascot-banner h2:before{color:#ffd98a}.mascot-banner p{margin:0;color:#efe4ff;line-height:1.7}.mascot-banner img{width:175px;height:175px;object-fit:cover;object-position:center 26%;border-radius:26px;box-shadow:0 8px 28px #2a104d55;transform:rotate(4deg)}.mascot-banner .sparkle{color:#ffe39a;font-weight:800;letter-spacing:.12em;font-size:13px;margin-bottom:8px}@media(max-width:600px){.mascot-banner{grid-template-columns:minmax(0,1fr) 105px;padding:15px;min-height:135px}.mascot-banner img{width:100px;height:120px;border-radius:16px}.mascot-banner p{font-size:12px}.mascot-banner h2{font-size:19px}}
+.mascot-pair{display:flex;align-items:flex-end;justify-content:center;gap:5px;flex:0 0 156px}.mascot-pair img{display:block;width:78px;height:94px;object-fit:contain;filter:drop-shadow(0 6px 8px #5530832e)}.mascot-pair img:last-child{width:71px;height:80px}.public-head{align-items:center}.public-stores{margin-top:8px}@media(max-width:600px){.mascot-pair{flex-basis:92px;gap:0}.mascot-pair img{width:49px;height:65px}.mascot-pair img:last-child{width:45px;height:55px}}
 </style>
 </head>
 <body>
 <header><h1>广州房源报价准确管理</h1><p>逐套确认系统报价 · 门店与小组进度 · 系统复导核验</p></header>
 <main>
-<section class="card mascot-banner"><div><div class="sparkle">✦ 报价核查 · 一起更准确 ✦</div><h2>每一套，都认真确认</h2><p>看进度、核报价、及时更新。让准确的信息成为团队的共同成果。</p></div><img src="assets/mascot-purple-web.png" alt="穿紫色西装、手持核查清单的卡通职场小人"></section>
-<section id="publicBoard" class="card"><div class="public-head"><div><h2>报价核查进度</h2><p class="muted">公开页只展示进度条、已完成套数和准确率；进入工作台后可查看权限内的完整信息。</p></div><button id="reloadPublic" class="secondary">刷新进度</button></div><div id="publicMetrics" class="metrics"></div><div class="public-stores"><h3>门店进度</h3><div id="publicStores" class="public-list"></div></div><div class="public-teams"><h3>小组进度</h3><div id="publicTeams" class="public-list"></div></div><p id="publicMessage" class="muted">正在加载进度…</p></section>
+<section id="publicBoard" class="card"><div class="public-head"><div><h2>门店核查进度</h2><p class="muted">已完成套数 · 报价准确率 · 核查进度</p></div><div class="mascot-pair"><img src="assets/purple-colleague.png" alt="紫色西装卡通伙伴"><img src="assets/dr-lansi.png" alt="兰斯博士卡通机器人"></div><button id="reloadPublic" class="secondary">刷新进度</button></div><div id="publicStores" class="public-list"></div><p id="publicMessage" class="muted">正在加载进度…</p></section>
 <section id="login" class="card">
 <h2>进入我的工作台</h2><p class="muted">选择门店和岗位，输入工号后四位。页面只展示名单匹配出的范围。</p>
 <div class="grid"><div><label>门店</label><select id="store"><option value="">请选择门店</option></select></div><div><label>岗位</label><select id="role"><option value="">请选择岗位</option><option value="advisor">豪宅顾问</option><option value="manager">店经理</option><option value="store_lead">店总</option><option value="bp">BP</option></select></div><div><label>工号后四位</label><input id="last4" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="例如 0035"></div></div>
@@ -58,9 +57,7 @@ async function loadPublic(){
   try{
     const data=await call("public_progress",{},"");
     const item=x=>'<div class="public-item"><strong>'+esc(x.store?x.store+" · ":"")+esc(x.name)+'</strong><small>已完成 '+x.checked+' 套 · 准确率 '+x.accuracy+'%</small><div class="public-track"><i style="width:'+x.progress+'%"></i></div><small>核查进度 '+x.progress+'%</small></div>';
-    $("publicMetrics").innerHTML=item(data.all);
     $("publicStores").innerHTML=(data.stores||[]).sort((a,b)=>b.progress-a.progress||a.name.localeCompare(b.name,"zh-CN")).map(item).join("")||'<p class="muted">暂无门店进度</p>';
-    $("publicTeams").innerHTML=(data.teams||[]).sort((a,b)=>a.store.localeCompare(b.store,"zh-CN")||b.progress-a.progress||a.name.localeCompare(b.name,"zh-CN")).map(item).join("")||'<p class="muted">暂无小组进度</p>';
     $("publicMessage").textContent="进度已更新 · "+new Date().toLocaleString("zh-CN",{hour12:false});
   }catch(e){$("publicMessage").textContent="进度暂时无法加载，请稍后刷新页面。"}finally{btn.disabled=false}
 }
