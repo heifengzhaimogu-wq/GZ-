@@ -40,7 +40,7 @@ input,select{border-color:#d9c9ef;border-radius:12px;background:#fff}input:focus
 <div id="metrics" class="metrics"></div>
 <section class="card"><div id="storeProgress"><h2>门店进度</h2><div id="groups"></div></div><div id="teamProgress"><h2>小组进度</h2><div id="teams"></div></div><div id="personalProgress"><h2>我的进度</h2><div id="personalBar"></div></div></section>
 <section class="card"><h2>微信群公示信息包</h2><p class="muted">全司版写明各店进展及小组排名；店面版写明各组进展及伙伴表现。下方就是可直接发送的文案，海报按同一口径生成，不展示逐套报价。</p><label for="noticeScope">公示范围</label><select id="noticeScope"></select><div id="noticePreview" class="notice-preview"></div><div class="notice-actions"><button id="copyNotice">复制这段群公告</button><button id="showPoster" class="secondary">预览海报</button><button id="copyImage" class="secondary">复制海报图片</button><button id="saveImage" class="secondary">下载海报 PNG</button></div><img id="posterPreview" class="poster-preview hidden" alt="报价核查公示海报预览"><p id="noticeMessage" class="muted"></p></section>
-<section id="admin" class="card hidden"><h2>管理员导入</h2><p class="muted">Excel 或 CSV 在本机解析，只提交工作台所需字段；原始文件不会保存在服务器。支持列名：房源编号、店面、店组、房源维护人、项目、租售类型、报价。</p><input id="upload" type="file" accept=".xlsx,.xls,.csv,text/csv"><p id="importMessage" class="muted"></p></section>
+<section id="admin" class="card hidden"><h2>管理员双表导入</h2><p class="muted">先选择报价底表和房间号表，再核对匹配结果。以房源编号关联；原始文件只在浏览器解析，不上传保存。更新同编号房源，本次未提供的已有房源保留。</p><label for="upload">① 报价底表（房源编号、报价、门店）</label><input id="upload" type="file" accept=".xlsx,.xls,.csv"><label for="roomUpload">② 房间号表（房源编号、房间号）</label><input id="roomUpload" type="file" accept=".xlsx,.xls,.csv"><p><button id="checkImport">核对两张表</button> <button id="confirmImport" disabled>确认导入</button></p><p id="importMessage" class="muted" style="white-space:pre-wrap"></p></section>
 <section class="card"><h2>逐套核查</h2><div class="grid"><div><label>门店</label><select id="filterStore"><option value="">全部可见门店</option></select></div><div><label>小组</label><select id="filterTeam"><option value="">全部可见小组</option></select></div><div><label>搜索房源／维护人</label><input id="search" placeholder="输入房源编号、项目或姓名"></div></div><p id="listCount" class="muted"></p><div id="properties" class="properties"></div></section>
 </section>
 </main>
@@ -85,7 +85,7 @@ function render(){
   $("filterTeam").innerHTML='<option value="">全部可见小组</option>'+ts.map(x=>'<option>'+esc(x)+"</option>").join("");
   $("filterStore").value=oldS;$("filterTeam").value=oldT;renderList();renderNotice()
 }
-function renderList(){let s=$("filterStore").value,t=$("filterTeam").value,q=$("search").value.trim();let visible=rows.filter(x=>(!s||x.store_name===s)&&(!t||x.team_name===t)&&(!q||[x.property_code,x.estate_name,x.owner_name].some(y=>String(y||"").includes(q))));$("listCount").textContent="显示 "+visible.length+" 套";$("properties").innerHTML=visible.slice(0,100).map(x=>{let status=x.check?.asking_status||"";return '<div class="property"><h3>'+esc(x.estate_name||"未填项目")+'</h3><span class="tag">'+esc(x.store_name)+" · "+esc(x.team_name)+'</span><p class="muted">'+esc(x.property_code)+" · 维护人："+esc(x.owner_name)+'</p><div class="price '+(x.system_asking_price===null?"blank":"")+'">系统报价：'+(x.system_asking_price===null?"未填":esc(x.system_asking_price))+'</div><div class="row"><select data-code="'+esc(x.property_code)+'"><option value="">待核查</option><option value="accurate" '+(status==="accurate"?"selected":"")+'>最新准确</option><option value="needs_change" '+(status==="needs_change"?"selected":"")+'>需修改</option><option value="owner_pending" '+(status==="owner_pending"?"selected":"")+'>待业主确认</option></select></div></div>'}).join("")+(visible.length>100?'<p class="muted">当前仅显示前100套，请继续筛选。</p>':"")}
+function renderList(){let s=$("filterStore").value,t=$("filterTeam").value,q=$("search").value.trim();let visible=rows.filter(x=>(!s||x.store_name===s)&&(!t||x.team_name===t)&&(!q||[x.property_code,x.estate_name,x.owner_name,x.room_number,x.building_name,x.unit_name].some(y=>String(y||"").includes(q))));$("listCount").textContent="显示 "+visible.length+" 套";$("properties").innerHTML=visible.slice(0,100).map(x=>{let status=x.check?.asking_status||"";return '<div class="property"><h3>'+esc(x.estate_name||"未填项目")+'</h3><p>位置：'+esc([x.building_name,x.unit_name,x.floor_name,x.room_number].filter(Boolean).join(' · ')||'未匹配房间号')+'</p><span class="tag">'+esc(x.store_name)+" · "+esc(x.team_name)+'</span><p class="muted">'+esc(x.property_code)+" · 维护人："+esc(x.owner_name)+'</p><div class="price '+(x.system_asking_price===null?"blank":"")+'">系统报价：'+(x.system_asking_price===null?"未填":esc(x.system_asking_price))+'</div><div class="row"><select data-code="'+esc(x.property_code)+'"><option value="">待核查</option><option value="accurate" '+(status==="accurate"?"selected":"")+'>最新准确</option><option value="needs_change" '+(status==="needs_change"?"selected":"")+'>需修改</option><option value="owner_pending" '+(status==="owner_pending"?"selected":"")+'>待业主确认</option></select></div></div>'}).join("")+(visible.length>100?'<p class="muted">当前仅显示前100套，请继续筛选。</p>':"")}
 $("properties").onchange=async e=>{const el=e.target;if(!el.dataset.code||!el.value)return;try{await call("review",{property_code:el.dataset.code,status:el.value});await refresh()}catch(x){alert("保存失败："+x.message)}};
 ["filterStore","filterTeam","search"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderList));
 $("logout").onclick=()=>{["gz_price_token","gz_price_name","gz_price_role"].forEach(x=>localStorage.removeItem(x));location.reload()};
@@ -220,7 +220,48 @@ $("copyImage").onclick=async()=>{try{const blob=await new Promise(ok=>poster().t
 $("saveImage").onclick=async()=>{const blob=await new Promise(ok=>poster().toBlob(ok,"image/png"));if(!blob)return message("noticeMessage","图片生成失败",true);const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="广州房源报价公示-"+noticeData().label+".png";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message("noticeMessage","海报已下载，可直接发到微信群。")};
 function parseCSV(text){let lines=[],row=[],cell="",quoted=false;for(let i=0;i<text.length;i++){let ch=text[i];if(ch==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++}else quoted=!quoted}else if(ch===","&&!quoted){row.push(cell);cell=""}else if((ch==="\n"||ch==="\r")&&!quoted){if(ch==="\r"&&text[i+1]==="\n")i++;row.push(cell);if(row.some(Boolean))lines.push(row);row=[];cell=""}else cell+=ch}row.push(cell);if(row.some(Boolean))lines.push(row);return lines}
 let xlsxPromise;function loadXlsx(){return xlsxPromise ||= new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="vendor/xlsx.full.min.js";script.onload=resolve;script.onerror=()=>reject(Error("Excel 解析组件加载失败，请检查网络"));document.head.appendChild(script)})}
-$("upload").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{let csv;if(/\.xlsx?$/i.test(file.name)){await loadXlsx();const book=XLSX.read(await file.arrayBuffer(),{type:"array"});csv=XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{header:1,defval:""})}else csv=parseCSV(await file.text());const headers=csv.shift().map(x=>String(x).replace(/^\uFEFF/,"").trim()),index=k=>headers.indexOf(k);if(index("房源编号")<0||index("店面")<0||index("报价")<0)throw Error("缺少房源编号、店面或报价列");const seen=new Set(),data=[],errors=[];for(let i=0;i<csv.length;i++){const r=csv[i],v=k=>String(r[index(k)]??""),code=v("房源编号").trim(),source=v("店面").trim(),team=v("店组").trim();if(!code||!source){errors.push("第"+(i+2)+"行缺少编号或门店");continue}if(source==="中海花城湾店"||seen.has(code))continue;seen.add(code);const store=source==="一大区"?(team.match(/^.+?店/)||[])[0]:source,price=v("报价").trim();if(!store||price&&!Number.isFinite(Number(price))){errors.push("第"+(i+2)+"行门店或报价无效");continue}data.push({property_code:code,store_name:store,source_store_name:source,team_name:team,owner_name:v("房源维护人"),owner_employee_code:null,estate_name:v("项目"),listing_type:v("租售类型"),system_asking_price:price===""?null:Number(price)})}if(errors.length)throw Error(errors.slice(0,5).join("；"));message("importMessage","已核对 "+data.length+" 套，正在导入……");for(let i=0;i<data.length;i+=200)await call("import",{rows:data.slice(i,i+200)});message("importMessage","导入完成："+data.length+" 套；原始文件未保存。");await refresh()}catch(x){message("importMessage","导入失败："+x.message,true)}e.target.value=""};
+let pendingImport=null;
+async function readImport(file){
+ if(!file)throw Error('请先选择两张表');
+ let grid;
+ if(/\.xlsx?$/i.test(file.name)){await loadXlsx();const book=XLSX.read(await file.arrayBuffer(),{type:'array'});grid=XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{header:1,defval:'',raw:false})}
+ else grid=parseCSV(await file.text());
+ if(grid.length<2)throw Error('文件为空或没有数据行');
+ const headers=grid.shift().map(x=>String(x).replace(/^\uFEFF/,'').trim());
+ return {headers,rows:grid.filter(r=>r.some(x=>String(x).trim())).map((r,i)=>({line:i+2,get:(...names)=>{const k=names.find(n=>headers.includes(n));return k===undefined?'':String(r[headers.indexOf(k)]??'').trim()}}))};
+}
+function mergeImport(prices,rooms){
+ const has=(t,...keys)=>keys.some(k=>t.headers.includes(k));
+ if(!has(prices,'房源编号','编号')||!has(prices,'报价')||!has(prices,'店面','门店'))throw Error('报价底表缺少房源编号、报价或门店列');
+ if(!has(rooms,'房源编号','编号')||!has(rooms,'房间号'))throw Error('房间号表缺少房源编号或房间号列');
+ const roomMap=new Map(),seen=new Set(),errors=[],data=[],missing=[];let excluded=0;
+ for(const r of rooms.rows){const code=r.get('房源编号','编号');if(!code){errors.push('房间号表第'+r.line+'行缺编号');continue}if(roomMap.has(code)){errors.push('房间号表编号重复：'+code);continue}roomMap.set(code,r)}
+ for(const r of prices.rows){
+  const code=r.get('房源编号','编号'),source=r.get('店面','门店'),team=r.get('店组');
+  if(!code||!source){errors.push('报价表第'+r.line+'行缺编号或门店');continue}
+  if(seen.has(code)){errors.push('报价表编号重复：'+code);continue}seen.add(code);
+  if(source==='中海花城湾店'){excluded++;continue}
+  const store=source==='一大区'?(team.match(/^.+?店/)||[])[0]:source,price=r.get('报价').replace(/[,，]/g,'');
+  if(!store||price!==''&&(!Number.isFinite(Number(price))||Number(price)<0)){errors.push('报价表第'+r.line+'行门店或报价无效');continue}
+  const room=roomMap.get(code),roomNumber=room?.get('房间号')||'';
+  if(!roomNumber)missing.push(code);
+  data.push({property_code:code,store_name:store,source_store_name:source,team_name:team,owner_name:r.get('房源维护人','维护人姓名','维护人'),owner_employee_code:r.get('维护人工号')||null,estate_name:r.get('项目','总盘')||room?.get('项目','总盘')||'',listing_type:r.get('租售类型'),system_asking_price:price===''?null:Number(price),room_number:roomNumber||null,building_name:room?.get('楼栋')||null,unit_name:room?.get('单元')||null,floor_name:room?.get('楼层')||null});
+ }
+ if(errors.length)throw Error('发现 '+errors.length+' 项问题，请修正后重选文件：\n'+errors.slice(0,15).join('\n'));
+ if(!data.length)throw Error('报价表没有可导入房源');
+ return {data,missing,excluded,extra:[...roomMap.keys()].filter(k=>!seen.has(k)).length};
+}
+function invalidateImport(){pendingImport=null;$('confirmImport').disabled=true;$('importMessage').textContent='已选择文件，请点击“核对两张表”。'}
+$('upload').onchange=invalidateImport;$('roomUpload').onchange=invalidateImport;
+$('checkImport').onclick=async()=>{pendingImport=null;$('confirmImport').disabled=true;const btn=$('checkImport');btn.disabled=true;try{
+ const result=mergeImport(await readImport($('upload').files[0]),await readImport($('roomUpload').files[0]));pendingImport=result.data;
+ message('importMessage','报价房源 '+result.data.length+' 套；匹配房间号 '+(result.data.length-result.missing.length)+' 套；未匹配 '+result.missing.length+' 套；房间号表额外编号 '+result.extra+' 个（不新增房源）；按既定规则排除 '+result.excluded+' 套。'+(result.missing.length?'\n未匹配编号（前20个）：'+result.missing.slice(0,20).join('、'):'')+'\n确认后更新报价与位置；未匹配房间号标为缺失。');$('confirmImport').disabled=false;
+ }catch(e){message('importMessage',e.message,true)}finally{btn.disabled=false}};
+$('confirmImport').onclick=async()=>{if(!pendingImport)return;const data=pendingImport;let completed=0;['confirmImport','checkImport','upload','roomUpload'].forEach(id=>$(id).disabled=true);try{
+ for(let i=0;i<data.length;i+=200){await call('import',{rows:data.slice(i,i+200)});completed+=Math.min(200,data.length-i);message('importMessage','正在导入：'+completed+'/'+data.length+' 套');}
+ pendingImport=null;$('upload').value='';$('roomUpload').value='';message('importMessage','导入完成：'+completed+' 套。原始文件未保存；其他使用者刷新后可看到权限内的新数据。');await refresh();await loadPublic();
+ }catch(e){message('importMessage','导入中断：已成功提交 '+completed+' 套，后续结果未确认。请重新核对并重试全部文件。原因：'+e.message,true);pendingImport=null}
+ finally{['checkImport','upload','roomUpload'].forEach(id=>$(id).disabled=false);$('confirmImport').disabled=true}};
 ownerCallback().then(()=>{if(token)show()});
 </script>
 </body></html>
